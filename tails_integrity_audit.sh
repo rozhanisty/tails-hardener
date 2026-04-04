@@ -58,14 +58,14 @@
 #
 #
 # Audit Modules:
-#   1. Network Leak Test      — Verify the Tails firewall drops clearnet traffic
-#   2. Forensic Swap Scan     — Detect swap partitions that could retain plaintext
-#   3. Memory Wipe Audit      — Confirm kernel memory-sanitisation flags are armed
-#   4. Filesystem Integrity   — Verify read-only root and Tor binary checksum
-#   5. Metadata Audit         — Scan Persistent/ files for dangerous metadata via mat2
+#   1. Network Leak Test       Verify the Tails firewall drops clearnet traffic
+#   2. Forensic Swap Scan      Detect swap partitions that could retain plaintext
+#   3. Memory Wipe Audit       Confirm kernel memory-sanitisation flags are armed
+#   4. Filesystem Integrity    Verify read-only root and Tor binary checksum
+#   5. Metadata Audit          Scan Persistent/ files for dangerous metadata via mat2
 #
 # Design Philosophy:
-#   This tool NEVER modifies the system. It reads, checks, and reports — nothing
+#   This tool NEVER modifies the system. It reads, checks, and reports  nothing
 #   more. Preserving the default Tails fingerprint is paramount: "Anonymity Loves
 #   Company." Every user running a differently-hardened Tails is a unique
 #   fingerprint. We do not contribute to that problem.
@@ -101,7 +101,7 @@ readonly CMDLINE_FILE="/proc/cmdline"
 readonly NETWORK_TEST_TARGET="8.8.8.8"
 
 # Known-good SHA-256 for the Tor binary shipped with Tails 6.x.
-# This value is intentionally left as a placeholder — the operator should
+# This value is intentionally left as a placeholder  the operator should
 # populate it from a trusted Tails source or verified download.
 readonly TOR_EXPECTED_SHA256="${TOR_AUDIT_CHECKSUM:-UNCONFIGURED}"
 
@@ -198,7 +198,7 @@ parse_args() {
 }
 
 show_help() {
-    printf '%b' "${BOLD}${SCRIPT_NAME}${RESET} v${VERSION} — Read-Only Integrity Audit for TailsOS
+    printf '%b' "${BOLD}${SCRIPT_NAME}${RESET} v${VERSION}  Read-Only Integrity Audit for TailsOS
 
 ${BOLD}USAGE:${RESET}
     sudo ./${SCRIPT_NAME} [OPTIONS]
@@ -239,7 +239,7 @@ preflight_check() {
 
     # Verify we are actually on Tails
     if ! grep -qi 'tails' /etc/os-release 2>/dev/null; then
-        warn "Could not confirm TailsOS via /etc/os-release — results may be unreliable."
+        warn "Could not confirm TailsOS via /etc/os-release  results may be unreliable."
     fi
 }
 
@@ -253,15 +253,15 @@ preflight_check() {
 
 audit_network_leak() {
     section "Module 1: Network Leak Test"
-    info "Sending one ICMP packet to ${NETWORK_TEST_TARGET} — firewall should drop it."
+    info "Sending one ICMP packet to ${NETWORK_TEST_TARGET}  firewall should drop it."
 
     # ping exits 0 on success (reachable), non-zero on failure (dropped/unreachable).
     # -c1: one packet  -W2: 2-second wait  -n: no DNS  output suppressed.
     if ping -c1 -W2 -n "$NETWORK_TEST_TARGET" > /dev/null 2>&1; then
-        record_fail "Clearnet ping to ${NETWORK_TEST_TARGET} SUCCEEDED — firewall is NOT blocking direct traffic!"
+        record_fail "Clearnet ping to ${NETWORK_TEST_TARGET} SUCCEEDED  firewall is NOT blocking direct traffic!"
         warn "This may indicate the Tor firewall rules are misconfigured or disabled."
     else
-        record_pass "Clearnet ping to ${NETWORK_TEST_TARGET} was dropped — firewall is enforcing Tor routing."
+        record_pass "Clearnet ping to ${NETWORK_TEST_TARGET} was dropped  firewall is enforcing Tor routing."
     fi
 }
 
@@ -277,13 +277,13 @@ audit_network_leak() {
 audit_swap_scan() {
     section "Module 2: Forensic Swap Scan"
 
-    # Check active swap first — this is the most critical finding.
+    # Check active swap first  this is the most critical finding.
     local active_swap
     active_swap="$(awk 'NR>1 {print $1}' /proc/swaps 2>/dev/null)" || true
 
     if [[ -n "$active_swap" ]]; then
         while IFS= read -r swap_dev; do
-            record_fail "ACTIVE swap detected on: ${swap_dev} — memory pages may be persisted to disk!"
+            record_fail "ACTIVE swap detected on: ${swap_dev}  memory pages may be persisted to disk!"
         done <<< "$active_swap"
     else
         record_pass "No active swap partitions found in /proc/swaps."
@@ -335,21 +335,21 @@ audit_memory_wipe() {
 
     # slub_debug=P: poisons SLUB allocator objects on free (kernel object wipe).
     if printf '%s' "$cmdline" | grep -q 'slub_debug=P'; then
-        record_pass "slub_debug=P is present — SLUB allocator poisoning is active."
+        record_pass "slub_debug=P is present  SLUB allocator poisoning is active."
     else
-        record_fail "slub_debug=P is MISSING from kernel cmdline — freed kernel objects are NOT sanitised."
+        record_fail "slub_debug=P is MISSING from kernel cmdline  freed kernel objects are NOT sanitised."
     fi
 
     # page_poison=1: poisons freed pages before they are reused (page wipe).
     if printf '%s' "$cmdline" | grep -q 'page_poison=1'; then
-        record_pass "page_poison=1 is present — page-level memory poisoning is active."
+        record_pass "page_poison=1 is present  page-level memory poisoning is active."
     else
-        record_warn "page_poison=1 is MISSING — this flag was deprecated in favour of 'init_on_free=1' in newer kernels."
+        record_warn "page_poison=1 is MISSING  this flag was deprecated in favour of 'init_on_free=1' in newer kernels."
         # Check the modern equivalent as a fallback.
         if printf '%s' "$cmdline" | grep -q 'init_on_free=1'; then
-            record_pass "init_on_free=1 detected — modern equivalent of page_poison=1 is active."
+            record_pass "init_on_free=1 detected  modern equivalent of page_poison=1 is active."
         else
-            record_fail "Neither page_poison=1 nor init_on_free=1 found — freed pages are NOT sanitised."
+            record_fail "Neither page_poison=1 nor init_on_free=1 found  freed pages are NOT sanitised."
         fi
     fi
 }
@@ -377,13 +377,13 @@ audit_filesystem_integrity() {
         if printf '%s' "$root_mount_opts" | grep -qE '(^|,)ro(,|$)'; then
             record_pass "Root filesystem (/) is mounted read-only."
         else
-            record_fail "Root filesystem (/) is NOT mounted read-only — this is unexpected for a live Tails session."
+            record_fail "Root filesystem (/) is NOT mounted read-only  this is unexpected for a live Tails session."
         fi
     fi
 
     # --- 4b: Tor binary checksum ---
     if [[ ! -f "$TOR_BINARY" ]]; then
-        record_warn "Tor binary not found at ${TOR_BINARY} — skipping checksum verification."
+        record_warn "Tor binary not found at ${TOR_BINARY}  skipping checksum verification."
         return
     fi
 
@@ -397,11 +397,11 @@ audit_filesystem_integrity() {
 
     if [[ "$TOR_EXPECTED_SHA256" == "UNCONFIGURED" ]]; then
         record_warn "No expected checksum configured. Set TOR_AUDIT_CHECKSUM env var to enable verification."
-        info "Current checksum recorded above — store it in a trusted location for future audits."
+        info "Current checksum recorded above  store it in a trusted location for future audits."
     elif [[ "$actual_sha256" == "$TOR_EXPECTED_SHA256" ]]; then
         record_pass "Tor binary checksum matches expected value."
     else
-        record_fail "Tor binary checksum MISMATCH — binary may have been tampered with!"
+        record_fail "Tor binary checksum MISMATCH  binary may have been tampered with!"
         info "Expected: ${TOR_EXPECTED_SHA256}"
         info "Actual:   ${actual_sha256}"
     fi
@@ -414,20 +414,20 @@ audit_filesystem_integrity() {
 # inspect files in the Persistent Storage for embedded metadata that could
 # de-anonymise the user if those files are shared.
 #
-# mat2 is invoked in check-only mode (--check) — it NEVER modifies files.
+# mat2 is invoked in check-only mode (--check)  it NEVER modifies files.
 # ---------------------------------------------------------------------------
 
 audit_metadata() {
     section "Module 5: Metadata Audit"
 
     if [[ ! -d "$PERSIST_ROOT" ]]; then
-        record_warn "Persistent Storage not found at ${PERSIST_ROOT} — skipping metadata audit."
+        record_warn "Persistent Storage not found at ${PERSIST_ROOT}  skipping metadata audit."
         info "Unlock Persistent Storage before running this module."
         return
     fi
 
     if ! command -v mat2 > /dev/null 2>&1; then
-        record_warn "mat2 is not available — skipping metadata audit."
+        record_warn "mat2 is not available  skipping metadata audit."
         info "mat2 is pre-installed on Tails. If missing, the system image may be non-standard."
         return
     fi
@@ -474,7 +474,7 @@ audit_metadata() {
         record_fail "${#risky_files[@]} file(s) contain potentially identifying metadata:"
         local i
         for i in "${!risky_files[@]}"; do
-            # Strip the PERSIST_ROOT prefix so paths in output are relative — safer for logs.
+            # Strip the PERSIST_ROOT prefix so paths in output are relative  safer for logs.
             local display_path="${risky_files[$i]#"${PERSIST_ROOT}/"}"
             info "  → ${display_path}"
             # Print any detail mat2 provided (e.g. specific metadata keys found).
@@ -517,13 +517,13 @@ main() {
     _init_colors
     preflight_check
 
-    printf '%b' "${BOLD}${CYAN}${SCRIPT_NAME}${RESET} v${VERSION} — TailsOS Read-Only Integrity Audit\n"
+    printf '%b' "${BOLD}${CYAN}${SCRIPT_NAME}${RESET} v${VERSION}  TailsOS Read-Only Integrity Audit\n"
     printf '%b' "${DIM}$(date '+%Y-%m-%d %H:%M:%S UTC%z')${RESET}\n"
 
     if [[ -n "$LOG_FILE" ]]; then
-        # Refuse to silently overwrite an existing file — append only.
+        # Refuse to silently overwrite an existing file  append only.
         if [[ ! -e "$LOG_FILE" ]]; then
-            printf '# %s v%s — Audit started %s\n' \
+            printf '# %s v%s  Audit started %s\n' \
                 "$SCRIPT_NAME" "$VERSION" "$(date '+%Y-%m-%d %H:%M:%S')" > "$LOG_FILE"
         fi
     fi
