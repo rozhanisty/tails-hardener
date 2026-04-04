@@ -16,4 +16,4 @@ Permission is hereby granted, free of charge, to any individual person to use, c
 
 ## Contact
 
-For permissions beyond personal use, contact: rozhan.isty@protonmail.com
+For permissions beyond personal use, contact: satisdatio@proton.me
